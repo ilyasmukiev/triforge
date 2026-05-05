@@ -10,6 +10,7 @@ from typing import Any
 from triforge._config import is_project_activated, load_project_config
 from triforge._hashing import project_hash
 from triforge._privacy import redact
+from triforge._privacy_llm import clean_if_needed
 from triforge.memory.store import ChatRecord, append_chat
 
 
@@ -86,7 +87,11 @@ def capture_from_payload(project: Path, payload: dict[str, Any]) -> int:
     for role, content in pairs:
         if role not in {"user", "assistant"} or not content:
             continue
+        # 1. fast regex first-pass (always)
         cleaned = redact(content, extra_patterns=extra)
+        # 2. heuristic-triggered LLM cleaner (only if a provider is configured
+        #    AND trigger words remain after step 1; degrades silently otherwise)
+        cleaned = clean_if_needed(cleaned)
         append_chat(
             h,
             ChatRecord(ts=ts, session_id=session_id, role=role, text=cleaned),

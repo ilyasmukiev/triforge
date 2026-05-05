@@ -41,10 +41,11 @@ classifiers = [
 dependencies = [
     # MCP server runtime
     "mcp>=1.0,<2.0",
-    # Memory: dense embeddings + lexical
+    # Memory: dense embeddings + lexical + graph
     "model2vec>=0.4.0",
     "vicinity>=0.4.4",
     "bm25s>=0.2.0",
+    "networkx>=3.0",
     # Storage
     "pyarrow>=15.0",
     # CLI
@@ -53,6 +54,8 @@ dependencies = [
     # Cross-platform path/lock helpers
     "platformdirs>=4.2",
     "portalocker>=2.8",
+    # HTTP client (used by the optional Ollama provider; tiny enough to ship by default)
+    "httpx>=0.27",
 ]
 
 [project.optional-dependencies]
@@ -65,16 +68,17 @@ dev = [
     "pyyaml>=6.0",
     "build>=1.2",
 ]
-hipporag = [
-    # Plan 2: graph memory + multi-hop reasoning
-    "hipporag>=2.0",
-    "networkx>=3.0",
-]
 llm = [
-    # Plan 2: auto-fallback LLM cleaner + summarizer
+    # Auto-fallback LLM providers (Plan 2: summary, OpenIE, privacy cleaner).
+    # Without these the chain degrades silently to dense-only.
     "anthropic>=0.40",
     "openai>=1.40",
-    "httpx>=0.27",
+]
+hipporag = [
+    # Reserved for users who want the upstream HippoRAG package (heavy ML
+    # deps; currently incompatible with Python 3.13+). triforge ships its
+    # own lightweight HippoRAG-style graph memory in core deps.
+    "hipporag>=2.0",
 ]
 insforge = [
     # Plan 3: InsForge pgvector persistence backend

@@ -1,4 +1,4 @@
-"""Hybrid retrieval: dense + BM25 + Reciprocal Rank Fusion."""
+"""Hybrid retrieval: dense + BM25 + graph PPR + Reciprocal Rank Fusion."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,9 +8,11 @@ import bm25s
 import numpy as np
 
 from triforge._embedder import embed
+from triforge.memory.graph import graph_search
 from triforge.memory.store import VectorRecord, load_all_vectors
 
-Mode = Literal["hybrid", "dense", "bm25"]
+Mode = Literal["hybrid", "dense", "bm25", "graph"]
+HitSource = Literal["dense", "bm25", "graph", "hybrid"]
 
 
 @dataclass
@@ -21,7 +23,7 @@ class SearchHit:
     session_id: str
     ts: str
     score: float
-    source: Literal["dense", "bm25", "hybrid"]
+    source: HitSource
 
 
 def _dense_scores(query: str, recs: list[VectorRecord]) -> np.ndarray:
@@ -48,11 +50,49 @@ def _bm25_scores(query: str, recs: list[VectorRecord]) -> np.ndarray:
     return flat
 
 
+def _graph_index_ranks(
+    project_hash: str, query: str, recs: list[VectorRecord], top_k: int
+) -> list[int]:
+    """Map graph PPR results (chunk_ids) to indices into ``recs``."""
+    by_id = {r.chunk_id: i for i, r in enumerate(recs)}
+    hits = graph_search(project_hash, query, top_k=top_k * 2)
+    out: list[int] = []
+    for h in hits:
+        if h.chunk_id in by_id:
+            out.append(by_id[h.chunk_id])
+        if len(out) >= top_k:
+            break
+    return out
+
+
 def _rrf(rank_lists: list[list[int]], k: int = 60) -> dict[int, float]:
     out: dict[int, float] = {}
     for ranks in rank_lists:
         for r, idx in enumerate(ranks):
             out[idx] = out.get(idx, 0.0) + 1.0 / (k + r + 1)
+    return out
+
+
+def _hits_from_order(
+    recs: list[VectorRecord],
+    order: list[int],
+    scores: list[float],
+    source: HitSource,
+) -> list[SearchHit]:
+    out: list[SearchHit] = []
+    for k_, i in enumerate(order):
+        rec = recs[i]
+        out.append(
+            SearchHit(
+                chunk_id=rec.chunk_id,
+                text=rec.text,
+                role=rec.role,
+                session_id=rec.session_id,
+                ts=rec.ts,
+                score=float(scores[k_]),
+                source=source,
+            )
+        )
     return out
 
 
@@ -69,39 +109,25 @@ def search(
     if mode == "dense":
         scores = _dense_scores(query, recs)
         order = list(np.argsort(-scores)[:top_k])
-        return [
-            SearchHit(
-                chunk_id=recs[i].chunk_id, text=recs[i].text, role=recs[i].role,
-                session_id=recs[i].session_id, ts=recs[i].ts,
-                score=float(scores[i]), source="dense",
-            )
-            for i in order
-        ]
+        return _hits_from_order(recs, list(map(int, order)), [float(scores[i]) for i in order], "dense")
 
     if mode == "bm25":
         scores = _bm25_scores(query, recs)
         order = list(np.argsort(-scores)[:top_k])
-        return [
-            SearchHit(
-                chunk_id=recs[i].chunk_id, text=recs[i].text, role=recs[i].role,
-                session_id=recs[i].session_id, ts=recs[i].ts,
-                score=float(scores[i]), source="bm25",
-            )
-            for i in order
-        ]
+        return _hits_from_order(recs, list(map(int, order)), [float(scores[i]) for i in order], "bm25")
 
-    # hybrid (default)
-    dense = _dense_scores(query, recs)
-    bm = _bm25_scores(query, recs)
-    d_ranks = list(np.argsort(-dense)[:top_k])
-    b_ranks = list(np.argsort(-bm)[:top_k])
-    rrf = _rrf([list(map(int, d_ranks)), list(map(int, b_ranks))])
+    if mode == "graph":
+        order = _graph_index_ranks(project_hash, query, recs, top_k)
+        return _hits_from_order(recs, order, [1.0 / (k + 1) for k in range(len(order))], "graph")
+
+    # hybrid (default): dense + BM25 + (graph if available) → RRF
+    dense_order = list(map(int, np.argsort(-_dense_scores(query, recs))[:top_k]))
+    bm_order = list(map(int, np.argsort(-_bm25_scores(query, recs))[:top_k]))
+    graph_order = _graph_index_ranks(project_hash, query, recs, top_k)
+
+    rank_lists = [dense_order, bm_order]
+    if graph_order:
+        rank_lists.append(graph_order)
+    rrf = _rrf(rank_lists)
     order = sorted(rrf.keys(), key=lambda i: -rrf[i])[:top_k]
-    return [
-        SearchHit(
-            chunk_id=recs[i].chunk_id, text=recs[i].text, role=recs[i].role,
-            session_id=recs[i].session_id, ts=recs[i].ts,
-            score=float(rrf[i]), source="hybrid",
-        )
-        for i in order
-    ]
+    return _hits_from_order(recs, order, [float(rrf[i]) for i in order], "hybrid")

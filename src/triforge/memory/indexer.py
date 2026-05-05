@@ -1,4 +1,16 @@
-"""Background indexer: turn unindexed chats.jsonl entries into vectors + summary."""
+"""Background indexer.
+
+Pipeline per ``run_index_once``:
+    1. Pull unindexed records from chats.jsonl.
+    2. Dense embeddings via model2vec → parquet shard.
+    3. Optional: LLM summary (if a provider is available).
+    4. Optional: OpenIE triplets → NetworkX knowledge graph.
+    5. Append a header line to summary.md and persist state.
+
+If no LLM provider is configured, steps 3 and 4 are skipped — the
+fallback is a deterministic header + first-200-chars-per-user-message
+recap. Either way, dense + BM25 search keeps working.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -10,6 +22,9 @@ from pathlib import Path
 from triforge._config import is_project_activated
 from triforge._embedder import embed_batch
 from triforge._hashing import project_hash
+from triforge._llm import Message, complete, get_provider
+from triforge.memory.graph import index_chunks_into_graph
+from triforge.memory.openie import extract_triplets
 from triforge.memory.store import (
     ChatRecord,
     VectorRecord,
@@ -17,6 +32,13 @@ from triforge.memory.store import (
     append_vectors,
     iter_unindexed_chats,
     mark_indexed,
+)
+
+SUMMARY_SYSTEM = (
+    "You are a project-memory summarizer. Read the recent user/assistant exchange "
+    "from a coding session and produce a SHORT bullet list (max 6 bullets, "
+    "≤ 25 words each). Focus on: decisions made, files changed, problems unsolved, "
+    "next steps. NO greetings, NO restating the question. Reply with bullets only."
 )
 
 
@@ -27,19 +49,56 @@ def _chunk_id(rec: ChatRecord) -> str:
     return h.hexdigest()[:16]
 
 
-def _summary_for(records: list[ChatRecord]) -> str:
-    """MVP summary: header + the first 200 chars of each user message.
+def _deterministic_summary(records: list[ChatRecord]) -> str:
+    user_lines = [r.text[:200] for r in records if r.role == "user"]
+    return "\n".join(f"- {line}" for line in user_lines) or "- (no user messages)"
 
-    Plan 2 will replace this with an LLM-generated summary using the
-    auto-fallback chain.
-    """
+
+def _llm_summary(records: list[ChatRecord]) -> str | None:
+    """One LLM round-trip; returns ``None`` if no provider or empty response."""
+    if get_provider() is None:
+        return None
+    transcript = "\n".join(
+        f"[{r.role}] {r.text[:600]}" for r in records[-30:]
+    )
+    msgs = [
+        Message(role="system", content=SUMMARY_SYSTEM),
+        Message(role="user", content=transcript),
+    ]
+    try:
+        out = complete(msgs, max_tokens=300)
+    except Exception:
+        return None
+    if not out:
+        return None
+    return out.strip()
+
+
+def _summary_block(records: list[ChatRecord]) -> str:
     if not records:
         return ""
     sid = records[0].session_id
     when = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    user_lines = [r.text[:200] for r in records if r.role == "user"]
-    body = "\n".join(f"- {line}" for line in user_lines) or "- (no user messages)"
+    body = _llm_summary(records) or _deterministic_summary(records)
     return f"## Session {sid} — {when}\n{body}"
+
+
+def _build_graph(project_hash_: str, vec_records: list[VectorRecord]) -> int:
+    """Run OpenIE on each chunk and add triplets to the project graph.
+
+    Returns the number of triplets added (0 if no LLM provider).
+    """
+    if get_provider() is None:
+        return 0
+    chunks: list[tuple[str, list]] = []
+    for vr in vec_records:
+        triplets = extract_triplets(vr.text)
+        if triplets:
+            chunks.append((vr.chunk_id, triplets))
+    if not chunks:
+        return 0
+    _, n_triplets = index_chunks_into_graph(project_hash_, chunks)
+    return n_triplets
 
 
 def run_index_once(project: Path) -> int:
@@ -64,7 +123,8 @@ def run_index_once(project: Path) -> int:
         for i, r in enumerate(records)
     ]
     append_vectors(h, vec_records)
-    append_summary(h, _summary_for(records))
+    append_summary(h, _summary_block(records))
+    _build_graph(h, vec_records)
     mark_indexed(h)
     return len(records)
 
