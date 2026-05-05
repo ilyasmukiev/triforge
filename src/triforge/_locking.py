@@ -1,5 +1,6 @@
 """Cross-platform advisory file locks for concurrent JSONL/JSON I/O."""
 from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Any

@@ -1,5 +1,6 @@
 """Stop-hook: read Claude Code transcript payload and append to chats.jsonl."""
 from __future__ import annotations
+
 import json
 import sys
 from datetime import datetime, timezone

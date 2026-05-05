@@ -118,7 +118,15 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # line too long (formatter handles it)
+    "RUF001", # ambiguous unicode in identifiers (we use UTF-8 prose)
+    "RUF002", # ambiguous unicode in docstrings (we use × in math docs)
+    "RUF003", # ambiguous unicode in comments
+    "N806",   # uppercase locals (we use M / Mn for matrices, DETACHED for win32 flags)
+    "B905",   # zip() without strict= (we accept implicit; readability)
+    "SIM117", # nested with-statements (sometimes clearer)
+]
 
 [tool.mypy]
 python_version = "3.10"

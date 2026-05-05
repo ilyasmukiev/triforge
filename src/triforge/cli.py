@@ -1,7 +1,8 @@
 """triforge command-line interface."""
 from __future__ import annotations
+
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -26,7 +27,7 @@ def _version_cb(value: bool) -> None:
 @app.callback()
 def _root(
     version: Annotated[
-        Optional[bool],
+        bool | None,
         typer.Option(
             "--version",
             callback=_version_cb,
@@ -84,7 +85,7 @@ def uninstall() -> None:
 @app.command()
 def status(
     project: Annotated[
-        Optional[Path], typer.Option(help="Project path (default: cwd)")
+        Path | None, typer.Option(help="Project path (default: cwd)")
     ] = None,
 ) -> None:
     """Show memory statistics for a project."""
@@ -117,7 +118,7 @@ def status(
 @app.command()
 def dump(
     project: Annotated[
-        Optional[Path], typer.Option(help="Project path (default: cwd)")
+        Path | None, typer.Option(help="Project path (default: cwd)")
     ] = None,
 ) -> None:
     """Print summary.md for a project."""
@@ -136,7 +137,7 @@ def dump(
 @app.command()
 def purge(
     project: Annotated[
-        Optional[Path], typer.Option(help="Project path (default: cwd)")
+        Path | None, typer.Option(help="Project path (default: cwd)")
     ] = None,
     yes: Annotated[bool, typer.Option("-y", "--yes", help="Skip confirmation")] = False,
 ) -> None:

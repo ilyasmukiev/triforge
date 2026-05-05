@@ -5,6 +5,7 @@ sits next to Claude Code's own user data (HOME on Unix, USERPROFILE on
 Windows).
 """
 from __future__ import annotations
+
 from pathlib import Path
 
 

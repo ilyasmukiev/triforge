@@ -1,5 +1,6 @@
 """Background indexer: turn unindexed chats.jsonl entries into vectors + summary."""
 from __future__ import annotations
+
 import hashlib
 import subprocess
 import sys
@@ -21,7 +22,7 @@ from triforge.memory.store import (
 
 def _chunk_id(rec: ChatRecord) -> str:
     h = hashlib.sha256(
-        f"{rec.session_id}|{rec.ts}|{rec.role}|{rec.text}".encode("utf-8")
+        f"{rec.session_id}|{rec.ts}|{rec.role}|{rec.text}".encode()
     )
     return h.hexdigest()[:16]
 

@@ -1,7 +1,8 @@
 """Lazy-loaded model2vec embedder singleton (potion-base-8M, 256-dim)."""
 from __future__ import annotations
+
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Sequence
 
 import numpy as np
 from model2vec import StaticModel

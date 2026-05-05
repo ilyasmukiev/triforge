@@ -1,5 +1,6 @@
 """SessionStart-hook payload generator (additionalContext from summary tail)."""
 from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 

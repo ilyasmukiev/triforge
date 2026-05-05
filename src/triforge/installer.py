@@ -9,6 +9,7 @@
            append ``## Triforge memory`` to ``AGENTS.md`` (or ``CLAUDE.md``).
 """
 from __future__ import annotations
+
 import json
 import shutil
 import sys

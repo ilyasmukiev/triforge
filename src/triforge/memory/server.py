@@ -1,5 +1,6 @@
 """FastMCP server exposing the `rag_search` tool."""
 from __future__ import annotations
+
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Literal
