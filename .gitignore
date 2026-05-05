@@ -1,0 +1,42 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.venv/
+venv/
+env/
+.python-version
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# triforge runtime data (must never be committed)
+.triforge/
+.claude/settings.local.json
+
+# OMC
+.omc/
+
+# benchmark results may contain real LLM output — manual commits only
+benchmark/results/raw/
+
+# Local env
+.env
+.env.local

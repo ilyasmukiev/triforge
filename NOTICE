@@ -1,0 +1,56 @@
+triforge
+Copyright 2026 Ilyas Mukiev
+
+This product includes software developed by Ilyas Mukiev and contributors,
+licensed under the Apache License, Version 2.0.
+
+================================================================================
+Acknowledgments — Third-Party Components
+================================================================================
+
+triforge integrates and re-exposes three independent open-source projects.
+All credit for their algorithms, models and source code belongs to the
+respective authors and organizations.
+
+--------------------------------------------------------------------------------
+1. semble — Code search for AI agents
+--------------------------------------------------------------------------------
+   Project:  https://github.com/MinishLab/semble
+   Authors:  Thomas van Dongen  (https://github.com/Pringled)
+             Stéphan Tulkens    (https://github.com/stephantul)
+   Org:      MinishLab / minish.ai (https://minish.ai)
+   License:  MIT
+   Used as:  optional MCP server, registered globally and invoked on demand
+             by Claude Code. Not bundled, installed via `uvx --from "semble[mcp]"`.
+
+--------------------------------------------------------------------------------
+2. InsForge — Backend-as-a-Service for AI agents
+--------------------------------------------------------------------------------
+   Project:  https://github.com/InsForge/InsForge
+   Org:      InsForge AI, Inc.
+   License:  Apache License 2.0
+   Used as:  optional MCP server (cloud or self-hosted Docker). Persistence
+             backend for triforge memory when started with `--storage=insforge`.
+
+--------------------------------------------------------------------------------
+3. HippoRAG 2 — Neurobiologically-inspired GraphRAG
+--------------------------------------------------------------------------------
+   Project:  https://github.com/OSU-NLP-Group/HippoRAG
+   Papers:   "HippoRAG: Neurobiologically Inspired Long-Term Memory
+              for Large Language Models" (NeurIPS 2024)
+              https://arxiv.org/abs/2405.14831
+             "From RAG to Memory: Non-Parametric Continual Learning
+              for Large Language Models" (ICML 2025)
+              https://arxiv.org/abs/2502.14802
+   Org:      OSU NLP Group — Ohio State University
+   License:  Apache License 2.0
+   Used as:  Python dependency. Powers the chat-memory layer (graph-based
+             multi-hop retrieval over conversation history).
+
+--------------------------------------------------------------------------------
+Inspiration
+--------------------------------------------------------------------------------
+   The idea of using HippoRAG 2 for chat memory was inspired by the article
+   "Ваш RAG не умеет думать. А мой умеет" by rRenegat,
+   published 2025-04-24 on Habr (RUVDS company blog):
+   https://habr.com/ru/companies/ruvds/articles/1025812/
