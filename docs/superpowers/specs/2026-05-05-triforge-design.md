@@ -381,13 +381,30 @@ Apache-2.0 требует `NOTICE` с атрибуцией. Включаем:
 - Параметры RRF fusion (веса `α/β/γ`).
 - Пороги heuristic-trigger для privacy.
 - Решение по `model2vec` модели для русского/смешанного контента (потенциально `potion-multilingual-128M`).
-- Совместимость с Windows (для MVP — только macOS/Linux).
 
 Эти детали уйдут в implementation plan.
 
 ---
 
-## 12. Не входит в MVP (out of scope)
+## 12. Cross-platform support
+
+Поддерживаемые ОС: **macOS**, **Linux**, **Windows**.
+
+Принципы:
+- Все пути — через `pathlib.Path`, никаких хардкод-сепараторов.
+- User data: `~/.claude/triforge/` (не `platformdirs`) для соответствия Claude Code конвенции; на Windows это `%USERPROFILE%\.claude\triforge\`.
+- Hooks-команды в `.claude/settings.local.json` используют **абсолютный путь к `triforge` исполняемому файлу** (определяется при `triforge install`), а не shell-переменные — чтобы избежать `$CWD` vs `%CWD%`. Project path передаётся явно через флаг `--project=<path>`, который Claude Code подставит как `${CLAUDE_PROJECT_DIR}` (поддерживается на всех платформах).
+- Background daemon (`triforge index --background`):
+  - Unix: `os.fork()` или `subprocess.Popen(..., start_new_session=True)`.
+  - Windows: `subprocess.Popen(..., creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP)`.
+- File locking: `portalocker` (cross-platform) для concurrent-safe записи в `chats.jsonl` и `state.json`.
+- CI matrix: `ubuntu-latest`, `macos-latest`, `windows-latest` на трёх версиях Python (3.10, 3.11, 3.12).
+
+Все примеры команд в README и docs даются для Bash и PowerShell.
+
+---
+
+## 13. Не входит в MVP (out of scope)
 
 - Multi-user shared memory.
 - Веб-UI для просмотра памяти.
