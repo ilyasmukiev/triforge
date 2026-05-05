@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "{{TRIFORGE_BIN}} prelude --project=${CLAUDE_PROJECT_DIR}" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "{{TRIFORGE_BIN}} capture --project=${CLAUDE_PROJECT_DIR}" }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "*",
+        "hooks": [
+          { "type": "command", "command": "{{TRIFORGE_BIN}} index --project=${CLAUDE_PROJECT_DIR} --background" }
+        ]
+      }
+    ]
+  }
+}
