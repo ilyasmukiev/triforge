@@ -40,3 +40,4 @@ benchmark/results/raw/
 # Local env
 .env
 .env.local
+site/
