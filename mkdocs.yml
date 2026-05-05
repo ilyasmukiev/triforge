@@ -1,0 +1,60 @@
+site_name: triforge
+site_description: One install — three dimensions of intelligence for Claude Code.
+site_url: https://ilyasmukiev.github.io/triforge/
+repo_url: https://github.com/ilyasmukiev/triforge
+repo_name: ilyasmukiev/triforge
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Architecture: architecture.md
+  - Privacy: privacy.md
+  - InsForge mode: insforge-mode.md
+  - Troubleshooting: troubleshooting.md
+  - Credits: credits.md
+  - Internal:
+      - Design spec: superpowers/specs/2026-05-05-triforge-design.md
+      - MVP implementation plan: superpowers/plans/2026-05-05-triforge-mvp.md

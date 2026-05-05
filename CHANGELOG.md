@@ -5,6 +5,40 @@ All notable changes to `triforge` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-05-05
+
+The polished, opinionated, batteries-included release.
+Builds on `0.1.0-alpha` with three additions:
+
+### Added — graph memory (Plan 2)
+
+- **`_llm.py`** — auto-fallback LLM provider chain: `ANTHROPIC_API_KEY → OPENAI_API_KEY → Ollama → none`. Override with `TRIFORGE_LLM_PROVIDER`. Each provider's import is lazy — missing SDK just disqualifies that provider.
+- **`memory/openie.py`** — LLM-driven `(subject, relation, object)` triplet extraction. Tolerant JSON parsing (handles fenced output and partial responses). Per-chunk cap + length limits. `[]` if no provider.
+- **`memory/graph.py`** — NetworkX `MultiDiGraph` persisted as `kg.pkl`; **Personalized PageRank** retrieval with **pure-Python PPR fallback** so triforge does not require scipy.
+- **`_privacy_llm.py`** — heuristic-triggered LLM cleaner subagent (`secret`, `password`, `token`, `auth`, `api_key`, `private_key`, `bearer`, `credential` → escalate to LLM). Degrades silently to regex-only when no provider is up.
+- **Indexer** now (a) generates an LLM bullet-list summary if a provider is up, otherwise the deterministic recap, and (b) extracts triplets per chunk and grows the project knowledge graph.
+- **Search** gains a `graph` mode and adds the graph PPR ranker into the `hybrid` RRF fusion when `kg.pkl` exists.
+
+### Added — InsForge target (Plan 3)
+
+- **`memory/insforge_export.py`** — `triforge migrate --to=insforge` exports a project's chat history, vectors, and summary into a PostgreSQL + pgvector store. Schema created on first run via `CREATE TABLE IF NOT EXISTS`. Idempotent on `(project_hash, chunk_id)`. Optional `--truncate` for clean rebuilds.
+- **CLI** gains the `migrate` subcommand wired to `--database-url` (or `$DATABASE_URL` env var).
+
+### Added — documentation site
+
+- **`mkdocs.yml`** + 7 docs pages (`docs/index.md`, `install.md`, `architecture.md`, `privacy.md`, `insforge-mode.md`, `troubleshooting.md`, `credits.md`).
+- **`.github/workflows/docs.yml`** — auto-deploys to GitHub Pages on every push to `main`.
+
+### Tests
+
+- **92/92 passing** (80 fast + 12 slow). Ruff clean. mkdocs `build --strict` clean.
+- New test modules: `test_llm.py`, `test_openie.py`, `test_graph.py`, `test_privacy_llm.py`, `test_insforge_export.py`.
+
+### Changed
+
+- Core deps now include `networkx` and `httpx` (small, needed by graph + Ollama provider). HippoRAG is no longer a triforge dep — we ship our own lightweight HippoRAG-style implementation. The `[hipporag]` extra is reserved for users who want the upstream package alongside us.
+- `[llm]` extra now contains only `anthropic` and `openai`; `httpx` moved to core.
+
 ## [0.1.0-alpha] — 2026-05-05
 
 The first end-to-end MVP. Three MCP servers register globally with one `triforge install`; per-project chat memory activates with `/rag` inside any project.

@@ -206,6 +206,52 @@ def prelude(
         typer.echo(_json.dumps(payload))
 
 
+@app.command()
+def migrate(
+    to: Annotated[
+        str, typer.Option("--to", help="Target backend. Currently only 'insforge' is supported.")
+    ] = "insforge",
+    database_url: Annotated[
+        str | None,
+        typer.Option(
+            "--database-url",
+            envvar="DATABASE_URL",
+            help="PostgreSQL URL with pgvector. Defaults to $DATABASE_URL.",
+        ),
+    ] = None,
+    project: Annotated[
+        Path | None, typer.Option(help="Project path (default: cwd)")
+    ] = None,
+    truncate: Annotated[
+        bool,
+        typer.Option(
+            "--truncate",
+            help="Drop all rows for this project before re-inserting (idempotent rebuild).",
+        ),
+    ] = False,
+) -> None:
+    """Export per-project memory into a PostgreSQL+pgvector store (e.g. InsForge)."""
+    if to.lower() != "insforge":
+        typer.echo(f"unknown target backend: {to!r}", err=True)
+        raise typer.Exit(2)
+    if not database_url:
+        typer.echo(
+            "Need a PostgreSQL URL. Pass --database-url or set DATABASE_URL.",
+            err=True,
+        )
+        raise typer.Exit(2)
+    proj = (project or Path.cwd()).resolve()
+
+    from triforge.memory.insforge_export import export_project
+
+    summary = export_project(proj, database_url=database_url, truncate=truncate)
+    console.print(
+        f"[green]migrated[/green] project [bold]{summary.project_hash}[/bold]: "
+        f"{summary.n_chats} chats, {summary.n_vectors} vectors, "
+        f"{summary.n_summary_bytes} bytes of summary."
+    )
+
+
 def main() -> None:
     app()
 
