@@ -6,11 +6,11 @@
 
 | Layer | Project | Purpose |
 |---|---|---|
-| 🧠 **Conversation memory** | [HippoRAG 2](https://github.com/OSU-NLP-Group/HippoRAG) | Per-project graph memory with multi-hop reasoning. New chats start with an automatic prelude and can search past conversations via `rag_search`. |
-| 🔍 **Code understanding** | [semble](https://github.com/MinishLab/semble) | Hybrid (BM25 + semantic) code search across 19 languages. Indexing < 1 s, p50 latency 1.5 ms, ~94 % token savings vs. `grep + read`. |
-| 🗄 **Backend for projects** | [InsForge](https://github.com/InsForge/InsForge) | PostgreSQL + pgvector + S3 + Deno functions, exposed via MCP. The agent itself can deploy, migrate, set up auth. |
+| 🧠 **Conversation memory** | HippoRAG-2-style graph memory (in-house, inspired by [OSU NLP Group](https://github.com/OSU-NLP-Group/HippoRAG)) | Per-project memory with multi-hop retrieval. New chats start with an automatic prelude and can search past conversations via `rag_search`. |
+| 🔍 **Code understanding** | [semble](https://github.com/MinishLab/semble) | Hybrid (BM25 + semantic) code search across 19 languages. |
+| 🗄 **Backend for projects** | [InsForge](https://github.com/InsForge/InsForge) | PostgreSQL + pgvector + S3 + Deno functions, exposed via MCP. |
 
-**Status:** alpha (`v0.1.0` work in progress). Spec at [`docs/superpowers/specs/2026-05-05-triforge-design.md`](./docs/superpowers/specs/2026-05-05-triforge-design.md).
+**Status:** `v1.0.1` — published, benchmarked, docs at <https://ilyasmukiev.github.io/triforge/>.
 
 ---
 
@@ -47,6 +47,61 @@ The skill writes hooks into `.claude/settings.local.json`, drops a marker file `
 
 ---
 
+## Benchmarks
+
+> All numbers below come from real `claude-haiku-4-5` calls (the cheapest current Anthropic model), running against the Flask + SQLite TODO sandbox at [`benchmark/sandbox-todo-app/`](./benchmark/sandbox-todo-app/). Both scenarios were given identical access to `Read`/`Bash`/`Grep` tools — the only difference is whether the SessionStart prelude was injected.
+
+### Per-question (one user turn that asks about a prior decision)
+
+| Metric | Baseline (no triforge) | Triforge | Δ |
+|---|---:|---:|---:|
+| **Total tokens** (prompt + tool calls + response) | **45 049** | **36 380** | **−8 669 (−19 %)** |
+| Tool calls | 10 | 0 | −10 |
+| Wall-clock latency | 66.6 s | 2.9 s | **−63.7 s (23× faster)** |
+| Found a correct answer? | ❌ no — gave up | ✅ yes — concrete | — |
+| Quality on 4-question rubric (`v1.0.1`) | 2 / 20 (10 %) | **20 / 20 (100 %)** | **10× quality** |
+
+The baseline doesn't *know* the prior decisions, so the agent goes hunting in the filesystem — `ls`, multiple `Read`s, `Grep`s, `git log`, looking for `.omc/` and `.claude/` notes. Ten round-trips later it still can't reconstruct what was decided in a prior chat (the answer was never in code), and it gives up. Triforge front-loads the answer in 134 prelude tokens; the agent replies in one turn with no tools.
+
+### How it scales
+
+Each "memory-recall" question saves about **8 700 tokens** and **64 seconds**. The savings are linear in the number of such questions per session — they multiply, not exponentiate, but for a long iterative session they add up fast:
+
+| Session shape | Memory-recall questions | Token saving | Time saving |
+|---|---:|---:|---:|
+| Short fix (5 turns, 1 recall) | 1 | ~9 k | ~1 min |
+| Typical feature work (20 turns, 5 recalls) | 5 | ~43 k | ~5 min |
+| Long iteration (50 turns, 15 recalls) | 15 | **~130 k** | **~16 min** |
+| Multi-day project (200 turns, 50 recalls) | 50 | **~430 k** | **~53 min** |
+
+If you only ever do single one-shot tasks where nothing was discussed before, triforge costs you a flat **+134 tokens** per session and gives nothing back — the prelude is pure overhead. **In every other case (which is the common case for project work), the prelude pays for itself many times over.**
+
+### What we're not measuring
+
+- Quality of `rag_search` on adversarial queries (search recall@5 on the seed was 50 % — for the full 100 % story we rely on the prelude *and* search together).
+- Cost of running larger Anthropic / OpenAI models (Haiku is the cheapest; with Sonnet or Opus, the absolute dollar savings are 4–10× larger because each saved token is worth more).
+- Cost of the indexer's LLM summary calls (one cheap LLM call per session-end; amortised over the whole session).
+
+### Where it can flip the wrong way
+
+A single failure mode worth knowing: if the user asks something that was **never discussed before**, the prelude is 134 tokens of overhead with zero recall to show for it. We measured that case too — net effect is the 134-token tax, no tool overhead saved (because the agent wouldn't have searched the filesystem either, the question wasn't about prior context).
+
+### Reproduce
+
+```bash
+git clone https://github.com/ilyasmukiev/triforge && cd triforge
+pip install -e ".[dev]"
+pip install tiktoken
+python benchmark/real_benchmark.py
+```
+
+Full benchmark reports:
+- [`benchmark/results/2026-05-06-real-benchmark.md`](./benchmark/results/2026-05-06-real-benchmark.md) — local layer (recall, latency, disk)
+- [`benchmark/results/2026-05-06-llm-quality-comparison.md`](./benchmark/results/2026-05-06-llm-quality-comparison.md) — quality 10 % → 100 %, with the regression that v1.0.1 fixed
+- [`benchmark/results/2026-05-06-realistic-token-comparison.md`](./benchmark/results/2026-05-06-realistic-token-comparison.md) — the realistic with-tools comparison the table above is built from
+
+---
+
 ## How memory works (in one diagram)
 
 ```
@@ -69,12 +124,12 @@ The skill writes hooks into `.claude/settings.local.json`, drops a marker file `
 
 ## Documentation
 
-Full docs are in [`docs/`](./docs):
+Full docs site: <https://ilyasmukiev.github.io/triforge/>
 
 - [Architecture](./docs/architecture.md)
 - [Installation](./docs/install.md)
 - [Privacy](./docs/privacy.md)
-- [InsForge mode (`--storage=insforge`)](./docs/insforge-mode.md)
+- [InsForge mode (`triforge migrate --to=insforge`)](./docs/insforge-mode.md)
 - [Troubleshooting](./docs/troubleshooting.md)
 - [Credits](./docs/credits.md)
 
@@ -104,9 +159,11 @@ Full docs are in [`docs/`](./docs):
 - **Org:** **OSU NLP Group** — Ohio State University
 - **License:** Apache-2.0
 
+triforge does **not** depend on the upstream `hipporag` package (heavy ML deps, currently incompatible with Python 3.13+); we ship our own lightweight HippoRAG-style implementation in [`memory/openie.py`](./src/triforge/memory/openie.py) and [`memory/graph.py`](./src/triforge/memory/graph.py) — same idea, pure-Python PPR fallback, no scipy required.
+
 ### Inspiration
 
-The idea of using HippoRAG 2 for chat memory was inspired by the article «Ваш RAG не умеет думать. А мой умеет» by **rRenegat**, published 2026-04-24 on Habr (RUVDS): <https://habr.com/ru/companies/ruvds/articles/1025812/>.
+The decision to use a HippoRAG-style approach for chat memory was inspired by the article «Ваш RAG не умеет думать. А мой умеет» by **rRenegat**, published 2026-04-24 on Habr (RUVDS): <https://habr.com/ru/companies/ruvds/articles/1025812/>.
 
 ---
 
