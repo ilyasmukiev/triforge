@@ -1,0 +1,169 @@
+{
+  "ts": "2026-05-06T00:38:31.612393+00:00",
+  "results": [
+    {
+      "question_id": "Q1",
+      "baseline": {
+        "local": {
+          "prompt_tokens": 25,
+          "prelude_tokens": 0,
+          "latency_capture_ms": 0.0,
+          "latency_index_ms": 0.0,
+          "latency_prelude_ms": 0.00029103830456733704,
+          "latency_search_ms": 0.000166997779160738,
+          "disk_kb": 0.0,
+          "dense_recall_at_5": false,
+          "prelude_recall": false,
+          "answer_reachable": false,
+          "top5_hits_text": []
+        },
+        "llm": null
+      },
+      "triforge": {
+        "local": {
+          "prompt_tokens": 168,
+          "prelude_tokens": 143,
+          "latency_capture_ms": 0.32041699159890413,
+          "latency_index_ms": 1.4259169693104923,
+          "latency_prelude_ms": 0.0939169549383223,
+          "latency_search_ms": 114.5366249838844,
+          "disk_kb": 24.5185546875,
+          "dense_recall_at_5": false,
+          "prelude_recall": true,
+          "answer_reachable": true,
+          "top5_hits_text": [
+            "What did we decide about the task status field two sessions ago, and is there a planned endpoint we still need to implem",
+            "Plan: POST /tasks/{id}/done that flips `done=1`. Returns 404 if id missing. Will implement next session \u2014 need first to ",
+            "We need an endpoint to mark tasks done.",
+            "Lets implement task status. Should we use TEXT pending/done or INTEGER 0/1?",
+            "Where do task descriptions live? I see only title."
+          ]
+        },
+        "llm": null
+      }
+    },
+    {
+      "question_id": "Q2",
+      "baseline": {
+        "local": {
+          "prompt_tokens": 12,
+          "prelude_tokens": 0,
+          "latency_capture_ms": 0.0,
+          "latency_index_ms": 0.0,
+          "latency_prelude_ms": 0.00016600824892520905,
+          "latency_search_ms": 8.300412446260452e-05,
+          "disk_kb": 0.0,
+          "dense_recall_at_5": false,
+          "prelude_recall": false,
+          "answer_reachable": false,
+          "top5_hits_text": []
+        },
+        "llm": null
+      },
+      "triforge": {
+        "local": {
+          "prompt_tokens": 142,
+          "prelude_tokens": 130,
+          "latency_capture_ms": 0.2227500081062317,
+          "latency_index_ms": 1.0687500471249223,
+          "latency_prelude_ms": 0.10470801498740911,
+          "latency_search_ms": 2.7529579820111394,
+          "disk_kb": 24.0263671875,
+          "dense_recall_at_5": true,
+          "prelude_recall": false,
+          "answer_reachable": true,
+          "top5_hits_text": [
+            "Why don't we have a description column on tasks yet?",
+            "Today only `title` (TEXT NOT NULL). We deferred `description` because the v1 spec didn't require multi-line bodies. We c",
+            "Lets implement task status. Should we use TEXT pending/done or INTEGER 0/1?",
+            "Add the column to the schema then.",
+            "Where do task descriptions live? I see only title."
+          ]
+        },
+        "llm": null
+      }
+    },
+    {
+      "question_id": "Q3",
+      "baseline": {
+        "local": {
+          "prompt_tokens": 14,
+          "prelude_tokens": 0,
+          "latency_capture_ms": 0.0,
+          "latency_index_ms": 0.0,
+          "latency_prelude_ms": 0.00016600824892520905,
+          "latency_search_ms": 8.300412446260452e-05,
+          "disk_kb": 0.0,
+          "dense_recall_at_5": false,
+          "prelude_recall": false,
+          "answer_reachable": false,
+          "top5_hits_text": []
+        },
+        "llm": null
+      },
+      "triforge": {
+        "local": {
+          "prompt_tokens": 146,
+          "prelude_tokens": 132,
+          "latency_capture_ms": 0.21429196931421757,
+          "latency_index_ms": 1.1402909876778722,
+          "latency_prelude_ms": 0.08837500354275107,
+          "latency_search_ms": 2.5891659897752106,
+          "disk_kb": 24.1748046875,
+          "dense_recall_at_5": false,
+          "prelude_recall": true,
+          "answer_reachable": true,
+          "top5_hits_text": [
+            "Reminder: how should I write a query that filters only unfinished tasks?",
+            "Lets implement task status. Should we use TEXT pending/done or INTEGER 0/1?",
+            "We need an endpoint to mark tasks done.",
+            "Plan: POST /tasks/{id}/done that flips `done=1`. Returns 404 if id missing. Will implement next session \u2014 need first to ",
+            "Where do task descriptions live? I see only title."
+          ]
+        },
+        "llm": null
+      }
+    },
+    {
+      "question_id": "Q4",
+      "baseline": {
+        "local": {
+          "prompt_tokens": 15,
+          "prelude_tokens": 0,
+          "latency_capture_ms": 0.0,
+          "latency_index_ms": 0.0,
+          "latency_prelude_ms": 0.000166997779160738,
+          "latency_search_ms": 0.000125030055642128,
+          "disk_kb": 0.0,
+          "dense_recall_at_5": false,
+          "prelude_recall": false,
+          "answer_reachable": false,
+          "top5_hits_text": []
+        },
+        "llm": null
+      },
+      "triforge": {
+        "local": {
+          "prompt_tokens": 148,
+          "prelude_tokens": 133,
+          "latency_capture_ms": 0.21066702902317047,
+          "latency_index_ms": 1.0994999902322888,
+          "latency_prelude_ms": 0.0904159969650209,
+          "latency_search_ms": 2.6181249995715916,
+          "disk_kb": 24.1572265625,
+          "dense_recall_at_5": true,
+          "prelude_recall": false,
+          "answer_reachable": true,
+          "top5_hits_text": [
+            "When we add multi-line task descriptions later, do we need a migration?",
+            "Today only `title` (TEXT NOT NULL). We deferred `description` because the v1 spec didn't require multi-line bodies. We c",
+            "Where do task descriptions live? I see only title.",
+            "We need an endpoint to mark tasks done.",
+            "Lets implement task status. Should we use TEXT pending/done or INTEGER 0/1?"
+          ]
+        },
+        "llm": null
+      }
+    }
+  ]
+}
