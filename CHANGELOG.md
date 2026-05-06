@@ -5,6 +5,31 @@ All notable changes to `triforge` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] — 2026-05-06
+
+### Fixed
+
+- **`_deterministic_summary` only recorded user messages.** When no LLM
+  provider was available the offline summarizer dropped every assistant
+  reply, so the SessionStart prelude carried the *questions* but not the
+  *decisions*. A real `claude-haiku-4-5` benchmark caught Claude reading
+  back the wrong answer to Q1 (said "TEXT" when the decision was
+  "INTEGER"). Now we record `- Q: …` / `→ A: …` pairs.
+  - **Quality on the 4-question rubric: 45 % → 100 %.**
+  - Same chunks, same disk usage, same latency.
+  - Cloud / LLM-driven summaries (`_llm_summary`) were already correct —
+    only the offline path was affected.
+
+### Added
+
+- `benchmark/real_benchmark.py` — quantitative benchmark with `tiktoken`
+  token counting, `prelude_recall`, `answer_reachable`, top-5 chunks
+  transparency, and an optional LLM layer (Anthropic / OpenAI).
+- `benchmark/results/2026-05-06-real-benchmark.md` — local-layer report
+  (any-path recall 4/4 = 100 %, +134 mean prompt tokens for full recall).
+- `benchmark/results/2026-05-06-llm-quality-comparison.md` — Claude Haiku
+  rubric run with verbatim answers showing the 10 % → 100 % jump.
+
 ## [1.0.0] — 2026-05-05
 
 The polished, opinionated, batteries-included release.

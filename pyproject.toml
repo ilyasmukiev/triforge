@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "triforge"
-version = "1.0.0"
+version = "1.0.1"
 description = "One install — three dimensions of intelligence for Claude Code: graph memory + code search + backend, in any project."
 readme = "README.md"
 license = { file = "LICENSE" }

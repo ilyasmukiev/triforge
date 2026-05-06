@@ -50,8 +50,32 @@ def _chunk_id(rec: ChatRecord) -> str:
 
 
 def _deterministic_summary(records: list[ChatRecord]) -> str:
-    user_lines = [r.text[:200] for r in records if r.role == "user"]
-    return "\n".join(f"- {line}" for line in user_lines) or "- (no user messages)"
+    """Pair each user turn with the assistant's reply, truncate, and bullet.
+
+    A previous version listed only user messages, which mistakenly froze
+    *questions* into the project memory and nothing about the *answers* — see
+    benchmark/results/2026-05-06-real-benchmark.md for the regression that
+    motivated the fix.
+    """
+    if not records:
+        return "- (no records)"
+    out: list[str] = []
+    pending_user: str | None = None
+    for r in records:
+        if r.role == "user":
+            if pending_user:
+                out.append(f"- Q: {pending_user[:160]}")
+            pending_user = r.text
+        elif r.role == "assistant":
+            if pending_user:
+                out.append(f"- Q: {pending_user[:160]}")
+                out.append(f"  → A: {r.text[:240]}")
+                pending_user = None
+            else:
+                out.append(f"- A: {r.text[:240]}")
+    if pending_user:
+        out.append(f"- Q: {pending_user[:160]}")
+    return "\n".join(out) or "- (empty)"
 
 
 def _llm_summary(records: list[ChatRecord]) -> str | None:

@@ -1,7 +1,7 @@
 # triforge real benchmark — 2026-05-06
 
 Run: `python benchmark/real_benchmark.py`
-Generated: 2026-05-06T00:38:31.612393+00:00
+Generated: 2026-05-06T00:40:22.620071+00:00
 Tokens counted via `tiktoken` `cl100k_base` (close to Claude tokenization).
 
 ## Setup
@@ -21,18 +21,18 @@ Then 4 follow-up questions are evaluated under two scenarios:
 
 | Q | Baseline tok | Triforge tok | Δ | Search recall@5 | Prelude recall | **Any path** | Search ms | Disk |
 |---|---:|---:|---:|:---:|:---:|:---:|---:|---:|
-| Q1 | 25 | 168 | +143 | ❌ | ✅ | ✅ | 114.5 ms | 24.5 KB |
-| Q2 | 12 | 142 | +130 | ✅ | ❌ | ✅ | 2.8 ms | 24.0 KB |
-| Q3 | 14 | 146 | +132 | ❌ | ✅ | ✅ | 2.6 ms | 24.2 KB |
-| Q4 | 15 | 148 | +133 | ✅ | ❌ | ✅ | 2.6 ms | 24.2 KB |
+| Q1 | 25 | 334 | +309 | ❌ | ✅ | ✅ | 50.7 ms | 25.2 KB |
+| Q2 | 12 | 308 | +296 | ✅ | ✅ | ✅ | 2.7 ms | 24.7 KB |
+| Q3 | 14 | 312 | +298 | ❌ | ✅ | ✅ | 2.6 ms | 24.8 KB |
+| Q4 | 15 | 314 | +299 | ✅ | ✅ | ✅ | 3.0 ms | 24.8 KB |
 
 ### Aggregate
 
-- **Mean prompt cost:** baseline 16 tok → triforge 151 tok (+134 tok / +815%)
+- **Mean prompt cost:** baseline 16 tok → triforge 317 tok (+300 tok / +1821%)
 - **rag_search recall@5:** 2/4 (50%)
-- **Prelude recall:** 2/4 (50%)
+- **Prelude recall:** 4/4 (100%)
 - **Any-path recall (prelude OR rag_search):** **4/4 (100%)**
-- **Mean latency:** index 1 ms · prelude 0 ms · search 30.6 ms
+- **Mean latency:** index 1 ms · prelude 0 ms · search 14.8 ms
 
 ### Read-out
 
